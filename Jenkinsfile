@@ -38,6 +38,7 @@ pipeline {
             steps {
                 sh """
                 echo "Running Unit Tests"
+                go test -v
                 """
             }
         }

@@ -1,16 +1,13 @@
 pipeline {
 
-    agent {
-        node {
-            label 'master'
-        }
+    agent any
+        tools {
+        go 'Golang1.15'
     }
-
-    options {
-        buildDiscarder logRotator( 
-                    daysToKeepStr: '16', 
-                    numToKeepStr: '10'
-            )
+    environment {
+        GO114MODULE = 'on'
+        CGO_ENABLED = 0
+        GOPATH = "${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_ID}"
     }
 
     stages {
@@ -33,21 +30,26 @@ pipeline {
                 ])
             }
         }
-
-        stage(' Unit Testing') {
+        stage('Pre Test') {
             steps {
-                sh """
-                echo "Running Unit Tests"
-                go test -v
-                """
+                sh 'git branch'
+                echo 'Installing dependencies'
+                sh 'go version'
+                sh 'go get -u golang.org/x/lint/golint'
             }
         }
 
-        stage('Code Analysis') {
+        stage(' Test') {
             steps {
-                sh """
-                echo "Running Code Analysis"
-                """
+                withEnv(["PATH+GO=${GOPATH}/bin"]){
+                    sh 'git branch'
+                    echo 'Running vetting'
+                    sh 'go vet .'
+                    echo 'Running linting'
+                    sh 'golint .'
+                    echo 'Running test'
+                    sh 'go test -v'
+                }
             }
         }
 
@@ -56,13 +58,10 @@ pipeline {
                 branch 'develop'
             }
             steps {
-                sh """
-                echo "Building Artifact"
-                """
-
-                sh """
-                echo "Deploying Code"
-                """
+                sh 'git branch'
+                echo 'Compiling and building'
+                sh 'go build -o main main.go'
+                sh './main'
             }
         }
 

@@ -3,7 +3,7 @@ package main
 import "fmt"
 
 func main() {
-	fmt.Println("Hello")
+	fmt.Println("Hello v1")
 }
 
 func Min(a, b int) int{
